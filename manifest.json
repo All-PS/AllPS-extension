@@ -4,7 +4,7 @@
   "description": "AllPS.io's PS problem suggestion Extension",
   "homepage_url": "https://www.allps.io",
   "version": "0.1",
-  "author": "flaxinger",
+  "author": "AllPS",
   "action": {
     "default_icon": "assets/logo-light.png",
     "default_popup": "popup.html"
@@ -35,7 +35,6 @@
   "host_permissions": [
     "https://www.acmicpc.net/",
     "https://school.programmers.co.kr/",
-    "https://github.com/",
     "https://solved.ac/api/v3/*"
   ],
   "web_accessible_resources": [
@@ -47,24 +46,11 @@
         "library/jquery-3.3.1.min.js",
         "library/semantic.min.js",
         "popup.html",
-        "popup.js",
-        "welcome.html",
-        "welcome.js"
+        "popup.js"
       ]
     }
   ],
   "content_scripts": [
-    {
-      "matches": [
-        "https://github.com/*"
-      ],
-      "js": [
-        "scripts/util.js",
-        "scripts/Github.js",
-        "scripts/authorize.js"
-      ],
-      "run_at": "document_idle"
-    },
     {
       "matches": [
         "https://www.acmicpc.net/*"

@@ -152,6 +152,17 @@ async function getHook() {
   return await getObjectFromLocalStorage('BaekjoonHub_hook');
 }
 
+/** welcome.html 의 분기 처리 dis_option에서 설정된 boolean 값을 반환합니다. */
+async function getOrgOption() {
+  try {
+    return await getObjectFromLocalStorage('BaekjoonHub_OrgOption');
+  } catch (ex) {
+    console.log('The way it works has changed with updates. Update your storage. ');
+    chrome.storage.local.set({ BaekjoonHub_OrgOption: "platform" }, () => { });
+    return "platform";
+  }
+}
+
 async function getModeType() {
   return await getObjectFromLocalStorage('mode_type');
 }
@@ -242,6 +253,19 @@ async function updateLocalStorageStats() {
   log('update stats', stats);
   return stats;
 }
+
+/**
+ * 해당 메서드는 프로그래밍 언어별 정리 옵션을 사용할 경우 언어별로 분류 하기 위함입니다.
+ * 스토리지에 저장된 {@link getOrgOption}값에 따라 분기 처리됩니다.
+ *
+ * @param {string} dirName - 기존에 사용되던 분류 방식의 디렉토리 이름입니다.
+ * @param {string} language - 'BaekjoonHub_disOption'이 True일 경우에 분리에 사용될 언어 입니다.
+ * */
+async function getDirNameByOrgOption(dirName, language) {
+  if (await getOrgOption() === "language") dirName = `${language}/${dirName}`;
+  return dirName;
+}
+
 
 /**
  * @deprecated

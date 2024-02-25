@@ -25,7 +25,7 @@ const localAuth = {
   parseAccessCode(url) {
     if (url.match(/\?error=(.+)/)) {
       chrome.tabs.getCurrent(function (tab) {
-        chrome.tabs.remove(tab.id, function () {});
+        chrome.tabs.remove(tab.id, function () { });
       });
     } else {
       // eslint-disable-next-line

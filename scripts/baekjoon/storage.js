@@ -26,7 +26,7 @@ class TTLCacheStats {
     }
     this.saveTimer = setTimeout(async () => {
       const clone = this.stats[this.name]; // 얇은 복사
-      console.log('테스트', clone);
+      console.log('Saving stats...', clone);
       await this.forceLoad(); // 최신화
       this.stats[this.name] = clone; // 업데이트
       await saveStats(this.stats);
@@ -96,6 +96,9 @@ const SolvedACCache = new TTLCacheStats('solvedac');
 async function updateProblemsFromStats(problem) {
   const data = {
     id: problem.problemId,
+    problem_description: problem.problem_description,
+    problem_input: problem.problem_input,
+    problem_output: problem.problem_output,
   };
   await problemCache.update(data);
 }

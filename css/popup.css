@@ -61,12 +61,12 @@ body {
   background: #ff3737;
 }
 
-#onffbox:checked + #onffmain {
+#onffbox:checked+#onffmain {
   border: 0px solid #8faadc;
   background: #8faadc;
 }
 
-#onffbox:checked + #onffmain #onffball {
+#onffbox:checked+#onffmain #onffball {
   left: 30px;
   border: 0px solid #2f5496;
   background: #2f5496;

@@ -21,7 +21,7 @@ async function parseData() {
     // .filter((x) => !x.includes('코딩테스트'))
     .map((x) => convertSingleCharToDoubleChar(x))
     .reduce((a, b) => `${a}/${b}`);
-  const title = document.querySelector('#tab > li.algorithm-title').textContent.replace(/\\n/g, '').trim();
+  const title = document.querySelector('.algorithm-title .challenge-title').textContent.replace(/\\n/g, '').trim();
   const problem_description = document.querySelector('div.guide-section-description > div.markdown').innerHTML;
   const language_extension = document.querySelector('div.editor > ul > li.nav-item > a').innerText.split('.')[1];
   const code = document.querySelector('textarea#code').value;
@@ -37,16 +37,18 @@ async function parseData() {
     .reduce((x, y) => (Number(x[0]) > Number(y[0]) ? x : y), ['0.00ms', '0.0MB'])
     .map((x) => x.replace(/(?<=[0-9])(?=[A-Za-z])/, ' '));
 
-  return makeData({ link, problemId, level, title, problem_description, division, language_extension, code, result_message, runtime, memory });
+  /*프로그래밍 언어별 폴더 정리 옵션을 위한 언어 값 가져오기*/
+  const language = document.querySelector('div#tour7 > button').textContent.trim();
+
+  return makeData({ link, problemId, level, title, problem_description, division, language_extension, code, result_message, runtime, memory, language });
 }
 
 async function makeData(origin) {
-  const { problem_description, problemId, level, result_message, division, language_extension, title, runtime, memory, code } = origin;
-  const directory = `프로그래머스/${level}/${problemId}. ${convertSingleCharToDoubleChar(title)}`;
+  const { problem_description, problemId, level, result_message, division, language_extension, title, runtime, memory, code, language } = origin;
+  const directory = await getDirNameByOrgOption(`프로그래머스/${level}/${problemId}. ${convertSingleCharToDoubleChar(title)}`, language);
   const levelWithLv = `${level}`.includes('lv') ? level : `lv${level}`.replace('lv', 'level ');
   const message = `[${levelWithLv}] Title: ${title}, Time: ${runtime}, Memory: ${memory} -BaekjoonHub`;
   const fileName = `${convertSingleCharToDoubleChar(title)}.${language_extension}`;
-  const dateInfo = getDateString(new Date(Date.now()));
   // prettier-ignore
   const readme =
     `# [${levelWithLv}] ${title} - ${problemId} \n\n`
@@ -58,8 +60,6 @@ async function makeData(origin) {
     + `${division.replace('/', ' > ')}\n\n`
     + `### 채점결과\n\n`
     + `${result_message}\n\n`
-    + `### 제출 일자\n\n`
-    + `${dateInfo}\n\n`
     + `### 문제 설명\n\n`
     + `${problem_description}\n\n`
     + `> 출처: 프로그래머스 코딩 테스트 연습, https://school.programmers.co.kr/learn/challenges`;

@@ -13,7 +13,7 @@
   - 파일명: fileName
   - Readme 내용 : readme
 */
-async function findData(data) {
+async function findData(data) {/////////0222
   try {
     if (isNull(data)) {
       let table = findFromResultTable();
@@ -25,10 +25,10 @@ async function findData(data) {
       })
       data = selectBestSubmissionList(table)[0];
     }
-    if (isNaN(Number(data.problemId)) || Number(data.problemId) < 1000) throw new Error(`대회 문제는 작동하지 않습니다.\n문제 ID: ${data.problemId}`);
+    if (isNaN(Number(data.problemId)) || Number(data.problemId) < 1000) throw new Error(`대회 문제에서는 작동하지 않습니다.\n문제 ID: ${data.problemId}`);
     data = { ...data, ...await findProblemInfoAndSubmissionCode(data.problemId, data.submissionId) };
-    const detail = makeDetailMessageAndReadme(data);
-    return { ...data, ...detail }; // detail 만 반환해도 되나, 확장성을 위해 모든 데이터를 반환합니다.
+    const detail = await makeDetailMessageAndReadme(data);//추가 수정 필요
+    return { ...data, ...detail };
   } catch (error) {
     console.error(error);
   }
@@ -40,12 +40,15 @@ async function findData(data) {
  * @param {Object} data
  * @returns {Object} { directory, fileName, message, readme, code }
  */
-function makeDetailMessageAndReadme(data) {
+async function makeDetailMessageAndReadme(data) {
   const { problemId, submissionId, result, title, level, problem_tags,
     code, language, memory, runtime } = data;
   const score = parseNumberFromString(result);
-  const directory = `백준/${level.replace(/ .*/, '')}/${problemId}. ${convertSingleCharToDoubleChar(title)}`;
-  const message = `[${level}] Title: ${title}`
+  const directory = await getDirNameByOrgOption(
+    `백준/${level.replace(/ .*/, '')}/${problemId}. ${convertSingleCharToDoubleChar(title)}`,
+    langVersionRemove(language, null)
+  );
+  const message = `[${level}] Title: ${title}, Time: ${runtime} ms, Memory: ${memory} KB`
     + ((isNaN(score)) ? ' ' : `, Score: ${score} point `) // 서브 태스크가 있는 문제로, 점수가 있는 경우 점수까지 커밋 메시지에 표기
     + `-BaekjoonHub`;
   const category = problem_tags.join(', ');
@@ -56,9 +59,9 @@ function makeDetailMessageAndReadme(data) {
     + `### 성능 요약\n\n`
     + `메모리: ${memory} KB, `
     + `시간: ${runtime} ms\n\n`
-    + `### 분류\n\n`
-    + `${category || "Empty"}\n\n`;
+    + `### 분류\n\n`;
   // prettier-ignore-end
+  console.log(data);
   return {
     directory,
     fileName,
@@ -70,19 +73,17 @@ function makeDetailMessageAndReadme(data) {
 
 /*
   현재 로그인된 유저를 파싱합니다.
-  삭제ㅔㅔㅔ
 */
-function findUsername() {
-  const el = document.querySelector('a.username');
-  if (isNull(el)) return null;
-  const username = el?.innerText?.trim();
-  if (isEmpty(username)) return null;
-  return username;
-}
+// function findUsername() {
+//   const el = document.querySelector('a.username');
+//   if (isNull(el)) return null;
+//   const username = el?.innerText?.trim();
+//   if (isEmpty(username)) return null;
+//   return username;
+// }
 
 /*
   유저 정보 페이지에서 유저 이름을 파싱합니다.
-  삭제ㅔㅔㅔㅔ
 */
 function findUsernameOnUserInfoPage() {
   const el = document.querySelector('div.page-header > h1');
@@ -101,7 +102,6 @@ function isExistResultTable() {
 
 /*
   결과 테이블을 파싱하는 함수입니다.
-  일부 사용
 */
 function parsingResultTableList(doc) {
   const table = doc.getElementById('status-table');
@@ -136,18 +136,17 @@ function parsingResultTableList(doc) {
     list.push(obj);
   }
   log('TableList', list);
-  console.log('테스트', list);
   return list;
 }
 
 /*
   제출 화면의 데이터를 파싱하는 함수로 다음 데이터를 확인합니다.
-    - 유저이름: username---------------------------?????????????
+    - 유저이름: username
     - 실행결과: result
-    - 메모리: memory------------------------------------------------
-    - 실행시간: runtime-----------------------------------------
+    - 메모리: memory
+    - 실행시간: runtime
     - 제출언어: language
-    - 제출시간: submissionTime---------------------------
+    - 제출시간: submissionTime
     - 제출번호: submissionId
     - 문제번호: problemId
     - 해당html요소 : element
@@ -173,23 +172,27 @@ function findFromResultTable() {
     - 백준 문제 카테고리: category
 */
 function parseProblemDescription(doc = document) {
+  convertImageTagAbsoluteURL(doc.getElementById('problem_description')); //이미지에 상대 경로가 있을 수 있으므로 이미지 경로를 절대 경로로 전환 합니다.
   const problemId = doc.getElementsByTagName('title')[0].textContent.split(':')[0].replace(/[^0-9]/, '');
-  if (problemId) {
-    log(`문제번호 ${problemId}`);
-    updateProblemsFromStats({ problemId });
-    return { problemId };
+  const problem_description = unescapeHtml(doc.getElementById('problem_description').innerHTML.trim());
+  const problem_input = doc.getElementById('problem_input')?.innerHTML.trim?.().unescapeHtml?.() || 'Empty'; // eslint-disable-line
+  const problem_output = doc.getElementById('problem_output')?.innerHTML.trim?.().unescapeHtml?.() || 'Empty'; // eslint-disable-line
+  if (problemId && problem_description) {
+    log(`문제번호 ${problemId}의 내용을 저장합니다.`);
+    updateProblemsFromStats({ problemId, problem_description, problem_input, problem_output });
+    return { problemId, problem_description, problem_input, problem_output };
   }
   return {};
 }
-//삭제ㅔㅔㅔ
-async function fetchProblemDescriptionById(problemId) {
-  return fetch(`https://www.acmicpc.net/problem/${problemId}`)
-    .then((res) => res.text())
-    .then((html) => {
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      return parseProblemDescription(doc);
-    });
-}
+
+// async function fetchProblemDescriptionById(problemId) {
+//   return fetch(`https://www.acmicpc.net/problem/${problemId}`)
+//     .then((res) => res.text())
+//     .then((html) => {
+//       const doc = new DOMParser().parseFromString(html, 'text/html');
+//       return parseProblemDescription(doc);
+//     });
+// }
 
 async function fetchSubmitCodeById(submissionId) {
   return fetch(`https://www.acmicpc.net/source/download/${submissionId}`, { method: 'GET' })
@@ -200,15 +203,14 @@ async function fetchSolvedACById(problemId) {
   return chrome.runtime.sendMessage({ sender: "baekjoon", task: "SolvedApiCall", problemId: problemId });
 }
 
-//이거만 사용
-async function getProblemDescriptionById(problemId) {
-  let problem = await getProblemFromStats(problemId);
-  if (isNull(problem)) {
-    problem = await fetchProblemDescriptionById(problemId);
-    updateProblemsFromStats(problem); // not await
-  }
-  return problem;
-}
+// async function getProblemDescriptionById(problemId) {
+//   let problem = await getProblemFromStats(problemId);
+//   if (isNull(problem)) {
+//     problem = await fetchProblemDescriptionById(problemId);
+//     updateProblemsFromStats(problem); // not await
+//   }
+//   return problem;
+// }
 
 async function getSubmitCodeById(submissionId) {
   let code = await getSubmitCodeFromStats(submissionId);
@@ -232,17 +234,18 @@ async function getSolvedACById(problemId) {
  * 제출 소스코드, 문제 설명, 예시 입력, 예시 출력, 문제 태그를 반환합니다.
  * @param {Object} problemId
  * @param {Object} submissionId
- * @returns {Object} { problemId, submissionId, code, problem_tags }
+ * @returns {Object} { problemId, submissionId, code, problem_description, problem_input, problem_output, problem_tags }
  */
 async function findProblemInfoAndSubmissionCode(problemId, submissionId) {
   log('in find with promise');
   if (!isNull(problemId) && !isNull(submissionId)) {
-    return Promise.all([getSubmitCodeById(submissionId), getSolvedACById(problemId)])
+    return Promise.all([getSubmitCodeById(submissionId), getSolvedACById(problemId)]) //삭제getProblemDescriptionById(problemId),
       .then(([code, solvedJson]) => {
         const problem_tags = solvedJson.tags.flatMap((tag) => tag.displayNames).filter((tag) => tag.language === 'ko').map((tag) => tag.name);
+        const title = solvedJson.titleKo;
         const level = bj_level[solvedJson.level];
 
-        return { problemId, submissionId, level, code, problem_tags };
+        return { problemId, submissionId, title, level, code, problem_tags }; //problem_description, problem_input, problem_output 삭제
       })
       .catch((err) => {
         console.log('error ocurred: ', err);
@@ -255,8 +258,8 @@ async function findProblemInfoAndSubmissionCode(problemId, submissionId) {
 /**
  * 문제의 목록을 문제 번호로 한꺼번에 반환합니다.
  * (한번 조회 시 100개씩 나눠서 진행)
- * @param {Array} problemIds 
- * @returns {Promise<Array>} 
+ * @param {Array} problemIds
+ * @returns {Promise<Array>}
  */
 
 async function fetchProblemInfoByIds(problemIds) {
@@ -271,7 +274,6 @@ async function fetchProblemInfoByIds(problemIds) {
 }
 
 /**
- * 삭제ㅔㅔㅔㅔ
  * 문제의 상세 정보 목록을 문제 번호 목록으로 한꺼번에 반환합니다.
  * (한번 조회 시 2개씩 병렬로 진행)
  * @param {Array} problemIds
@@ -284,10 +286,9 @@ async function fetchProblemDescriptionsByIds(problemIds) {
 }
 
 /**
- * 제출 코드 가져오기... 사용
  * submissionId들을 통해 코드들을 가져옵니다. (부하를 줄이기 위해 한번에 2개씩 가져옵니다.)
  * @param {Array} submissionIds
- * @returns {Promise<Array>} 
+ * @returns {Promise<Array>}
  */
 async function fetchSubmissionCodeByIds(submissionIds) {
   return asyncPool(2, submissionIds, async (submissionId) => {
@@ -298,7 +299,6 @@ async function fetchSubmissionCodeByIds(submissionIds) {
 
 
 /**
- * 사용 안 함 삭제ㅔㅔㅔㅔㅔ
  * user가 problemId 에 제출한 리스트를 가져오는 함수
  * @param problemId: 문제 번호
  * @param username: 백준 아이디
@@ -315,7 +315,6 @@ async function findResultTableByProblemIdAndUsername(problemId, username) {
 }
 
 /**
- * 삭제ㅔㅔㅔㅔ
  * user가 "맞았습니다!!" 결과를 맞은 중복되지 않은 제출 결과 리스트를 가져오는 함수
  * @param username: 백준 아이디
  * @returns Promise<Array<Object>>
@@ -325,7 +324,6 @@ async function findUniqueResultTableListByUsername(username) {
 }
 
 /**
- * 너도 삭제ㅔㅔㅔㅔㅔ
  * user가 "맞았습니다!!" 결과를 맞은 모든 제출 결과 리스트를 가져오는 함수
  * @param username: 백준 아이디
  * @return Promise<Array<Object>>
@@ -344,7 +342,6 @@ async function findResultTableListByUsername(username) {
 }
 
 /**
- * 삭삭제제제제제제제
  * url에 해당하는 html 문서를 가져오는 함수
  * @param url: url 주소
  * @returns html document
@@ -356,4 +353,25 @@ async function findHtmlDocumentByUrl(url) {
       const parser = new DOMParser();
       return parser.parseFromString(text, 'text/html');
     });
+}
+
+/**
+ * 백준에서 표기된 프로그래밍 언어의 버전을 없애고 업로드 하기 위함입니다.
+ * 버전에 차이가 중요하게 여겨진다면, 'ignore'에 예외 케이스를 추가하세요.
+ * 해당 코드는 'lang'이 "PyPy3" 같이 주어진다면은 버전을 제거하지 않습니다.
+ * 예외에 추가 되어있거나, "Python 3.8" 혹은 "Java 11" 같이 주어진다면 버전이 제거될것입니다.
+ * @param {string} lang - 처리 하고자 하는 언어입니다.
+ * @param {Set} ignores - 예외 처리 하고자 하는 언어를 추가 해주세요.
+ * @return {string} - 분기 처리에 따른 lang
+ *  */
+function langVersionRemove(lang, ignores) {
+  if (ignores === null || !ignores.has(lang)) {
+    let parts = lang.split(' ');
+    if (/^\d/.test(parts[parts.length - 1])) {
+      parts.pop();
+    }
+    lang = parts.join(' ');
+  }
+
+  return lang;
 }

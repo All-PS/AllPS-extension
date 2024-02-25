@@ -1,17 +1,21 @@
 /**
  * 로딩 버튼 추가
  */
-function startUpload() {
+function startUpload(problemId) {
   let elem = document.getElementById('BaekjoonHub_progress_anchor_element');
-  if (elem !== undefined) {
-    elem = document.createElement('span');
+  if (elem === null) { // elem이 undefined가 아니라 존재하지 않을 때 새로 만들기
+    elem = document.createElement('a');
     elem.id = 'BaekjoonHub_progress_anchor_element';
     elem.className = 'runcode-wrapper__8rXm';
-    elem.style = 'margin-left: 10px;padding-top: 0px;';
+    elem.style = 'margin-left: 10px; padding-top: 0px;';
+    elem.href = `https://allps.io/recommend?code=${problemId}&platformId=1`; // 동적으로 problemId를 URL에 삽입
+    elem.textContent = 'AllPS 문제 추천'; // 링크에 표시될 텍스트
+    // 링크를 페이지의 특정 위치에 추가
+    const target = document.getElementById('status-table')?.childNodes[1].childNodes[0].childNodes[3] || document.querySelector('div.table-responsive > table > tbody > tr > td:nth-child(5)');
+    if (target) {
+      target.append(elem);
+    }
   }
-  elem.innerHTML = `<div id="BaekjoonHub_progress_elem" class="BaekjoonHub_progress"></div>`;
-  const target = document.getElementById('status-table')?.childNodes[1].childNodes[0].childNodes[3] || document.querySelector('div.table-responsive > table > tbody > tr > td:nth-child(5)');
-  target.append(elem);
   if (target.childNodes.length > 0) {
     target.childNodes[0].append(elem);
   }
@@ -136,30 +140,24 @@ function convertResultTableHeader(header) {
       return 'level';
     case '결과':
       return 'result';
+    case '문제내용':
+      return 'problemDescription';
     case '언어':
       return 'language';
     case '제출 번호':
       return 'submissionId';
+    case '아이디':
+      return 'username';
+    case '제출시간':
+    case '제출한 시간':
+      return 'submissionTime';
+    case '시간':
+      return 'runtime';
+    case '메모리':
+      return 'memory';
+    case '코드 길이':
+      return 'codeLength';
     default:
       return 'unknown';
   }
-}
-
-function convertImageTagAbsoluteURL(doc = document) {
-  if (isNull(doc)) return;
-  // img tag replace Relative URL to Absolute URL.
-  Array.from(doc.getElementsByTagName('img'), (x) => {
-    x.setAttribute('src', x.currentSrc);
-    return x;
-  });
-}
-
-/**
- * 백준의 날짜 형식과 같게 포맷된 스트링을 반환하는 함수
- * @example 2023년 9월 23일 16:26:26
- * @param {Date} date
- * @return {string} 포맷된 스트링
- */
-function getDateString(date) {
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDay()}일 ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
 }
