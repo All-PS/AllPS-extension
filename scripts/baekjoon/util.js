@@ -8,7 +8,8 @@ function startUpload(problemId) {
     elem.id = 'BaekjoonHub_progress_anchor_element';
     elem.className = 'runcode-wrapper__8rXm';
     elem.style = 'margin-left: 10px; padding-top: 0px;';
-    elem.href = `https://allps.io/recommend?code=${problemId}&platformId=1`; // 동적으로 problemId를 URL에 삽입
+    elem.href = `https://allps.io/recommend?code=${problemId}&platformId=1`;
+    // elem.href = `localhost:3000/recommend?code=${problemId}&platformId=1`;
     elem.textContent = 'AllPS 문제 추천'; // 링크에 표시될 텍스트
     // 링크를 페이지의 특정 위치에 추가
     const target = document.getElementById('status-table')?.childNodes[1].childNodes[0].childNodes[3] || document.querySelector('div.table-responsive > table > tbody > tr > td:nth-child(5)');
@@ -16,11 +17,9 @@ function startUpload(problemId) {
       target.append(elem);
     }
   }
-  if (target.childNodes.length > 0) {
-    target.childNodes[0].append(elem);
-  }
-  startUploadCountDown();
+  //startUploadCountDown();
 }
+
 
 /**
  * 업로드 완료 아이콘 표시 및 링크 생성

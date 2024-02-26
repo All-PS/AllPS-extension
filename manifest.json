@@ -3,7 +3,7 @@
   "name": "AllPS Extension",
   "description": "AllPS.io's PS problem suggestion Extension",
   "homepage_url": "https://www.allps.io",
-  "version": "0.1",
+  "version": "0.2",
   "author": "AllPS",
   "action": {
     "default_icon": "assets/logo-light.png",
